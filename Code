@@ -1,0 +1,107 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_LINE_LENGTH 1024
+#define MAX_FILENAME_LENGTH 256
+
+void convertToCSV(FILE* input, FILE* output) {
+    char line[MAX_LINE_LENGTH];
+    while (fgets(line, MAX_LINE_LENGTH, input) != NULL) {
+        fprintf(output, "%s", line);
+    }
+}
+
+void convertToJSON(FILE* input, FILE* output) {
+    int i = 0;
+    char line[MAX_LINE_LENGTH];
+    fprintf(output, "[\n");
+    while (fgets(line, MAX_LINE_LENGTH, input) != NULL) {
+        fprintf(output, "  \"%s\"%s", line, (i < MAX_LINE_LENGTH - 2) ? ",\n" : "\n");
+        i++;
+    }
+    fprintf(output, "]");
+}
+
+void convertToXML(FILE* input, FILE* output) {
+    char line[MAX_LINE_LENGTH];
+    fprintf(output, "<data>\n");
+    while (fgets(line, MAX_LINE_LENGTH, input) != NULL) {
+        fprintf(output, "  <item>%s</item>\n", line);
+    }
+    fprintf(output, "</data>");
+}
+
+int main() {
+    char input_filename[MAX_FILENAME_LENGTH];
+    char output_filename[MAX_FILENAME_LENGTH];
+    char output_format;
+
+    printf("Enter the input filename: ");
+    if (scanf("%s", input_filename) != 1) {
+        printf("Error: Invalid input filename.\n");
+        return 1;
+    }
+
+    printf("Enter the output filename (without extension): ");
+    if (scanf("%s", output_filename) != 1) {
+        printf("Error: Invalid output filename.\n");
+        return 1;
+    }
+
+    printf("Enter the output format (c for CSV, j for JSON, x for XML): ");
+    if (scanf(" %c", &output_format) != 1) {
+        printf("Error: Invalid output format.\n");
+        return 1;
+    }
+
+    FILE* input = fopen(input_filename, "r");
+    if (input == NULL) {
+        printf("Error: Could not open input file '%s'\n", input_filename);
+        return 1;
+    }
+
+    char output_filename_with_ext[MAX_FILENAME_LENGTH];
+    switch (output_format) {
+    case 'c':
+        sprintf(output_filename_with_ext, "%s.csv", output_filename);
+        break;
+    case 'j':
+        sprintf(output_filename_with_ext, "%s.json", output_filename);
+        break;
+    case 'x':
+        sprintf(output_filename_with_ext, "%s.xml", output_filename);
+        break;
+    default:
+        printf("Error: Invalid output format. Please use c for CSV, j for JSON, or x for XML.\n");
+        fclose(input);
+        return 1;
+    }
+
+    FILE* output = fopen(output_filename_with_ext, "w");
+    if (output == NULL) {
+        printf("Error: Could not create output file '%s'\n", output_filename_with_ext);
+        fclose(input);
+        return 1;
+    }
+
+    switch (output_format) {
+    case 'c':
+        convertToCSV(input, output);
+        break;
+    case 'j':
+        convertToJSON(input, output);
+        break;
+    case 'x':
+        convertToXML(input, output);
+        break;
+    }
+
+    fclose(input);
+    fclose(output);
+
+    printf("Output file '%s' created successfully.\n", output_filename_with_ext);
+
+    return 0;
+}
